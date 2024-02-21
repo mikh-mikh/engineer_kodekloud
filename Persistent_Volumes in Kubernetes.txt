@@ -1,0 +1,64 @@
+Persistent Volumes in Kubernetes
+
+kind: PersistentVolume
+metadata:
+  name: pv-devops
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  hostPath:
+    path: /tmp
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-devops
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 500Mi
+
+--- 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-devops
+  labels:
+    pod: pod-devops
+spec:
+  volumes:
+    - name: storage-devops
+      persistentVolumeClaim:
+        claimName: pvc-devops
+  containers:
+    - name: container-devops
+      image: httpd:latest
+      ports:
+        - containerPort: 80
+      volumeMounts:
+        - name: storage-devops
+          mountPath: /usr/local/apache2/htdocs
+
+
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-devops
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30008
+  selector:
+    pod: pod-devops

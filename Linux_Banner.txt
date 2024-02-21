@@ -1,0 +1,6 @@
+Linux Banner
+
+copy neede to /etc/motd
+edit /etc/ssh/sshd_config (switch show motd to "yes")
+systemctl restart sshd
+check

@@ -1,0 +1,5 @@
+Fix Python App Deployed on Kubernetes Cluster
+
+check and fix deployment and service
+k edit service
+k edit deployments

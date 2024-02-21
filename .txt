@@ -1,0 +1,32 @@
+
+
+xFusionCorp Industries has hosted several static websites on Nautilus Application Servers in Stratos DC. There are some confidential directories in the document root that need to be password protected. Since they are using Apache for hosting the websites, the production support team has decided to use .htaccess with basic auth. There is a website that needs to be uploaded to /var/www/html/security on Nautilus App Server 3. However, we need to set up the authentication before that.
+
+1. Create /var/www/html/security direcotry if doesn't exist.
+2. Add a user mariyam in htpasswd and set its password to LQfKeWWxWD.
+3. There is a file /tmp/index.html present on Jump Server. Copy the same to the directory you created, please make sure default document root should remain /var/www/html. Also website should work on URL http://<app-server-hostname>:8080/security/
+
+from jumphost:
+scp /tmp/index.html banner@stapp03:/home/banner
+
+on stapp03:
+mkdir /var/www/html/security
+create /var/www/html/security/.htaccess:
+chown -R apache:apache /var/www/html/security
+chmod 640 /var/www/html/security/.htaccess
+cp -pr index.html /var/www/html/security
+
+AuthType Basic
+AuthName "Password Required"
+Require valid-user
+AuthUserFile /etc/httpd/.htpasswd
+
+htpasswd -c /etc/httpd/.htpasswd mariyam
+systemctl restart httpd
+
+curl localhost:8080/security/
+we will get 401 unautorized (ok)
+
+curl -u mariyam localhost:8080/security/index.html
+Enter host password for user 'mariyam': (enter password from task)
+This is xFusionCorp Industries Protected Directory! (ok)

@@ -1,0 +1,42 @@
+Bash scripts if/else statements
+
+The Nautilus DevOps team is working on to develop a bash script to automate some tasks. As per the requirements shared with the team database related tasks needed to be automated. Below you can find more details about the same:
+
+Write a bash script named /opt/scripts/database.sh on Database Server. The mariadb database server is already installed on this server.
+
+Add code in the script to perform some database related operations as per conditions given below:
+
+a. Create a new database named kodekloud_db01. If this database already exists on the server then script should print a message Database already exists and if the database does not exist then create the same and script should print Database kodekloud_db01 has been created. Further, create a user named kodekloud_roy and set its password to asdfgdsd, also give full access to this user on newly created database (remember to use wildcard host while creating the user).
+
+b. Now check if the database (if it was already there) already contains some data (tables)if so then script should print 'database is not empty otherwise import the database dump /opt/db_backups/db.sql and print imported database dump into kodekloud_db01 database.
+
+c. Take a mysql dump which should be named as kodekloud_db01.sql and save it under /opt/db_backups/ directory.
+
+
+#!/bin/bash
+#Database variables
+DB_NAME="kodekloud_db01"
+DB_USER="kodekloud_roy"
+DB_PASS="asdfgdsd"
+#Check if the database exists
+if mysql -u root -e "use $DB_NAME" 2>/dev/null; then
+  echo "Database already exists"
+else
+  #Create the database
+  mysql -u root -e "create database $DB_NAME"
+  echo "Database $DB_NAME has been created"
+#Create the user and grant full access
+  mysql -u root -e "CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';"
+  mysql -u root -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';"
+  mysql -u root -e "FLUSH PRIVILEGES;"
+fi
+#Check if the database is empty
+if mysql -u root $DB_NAME -e "SHOW TABLES" | grep -q "."; then
+  echo "database is not empty"
+else
+#Import the database dump
+  mysql -u root $DB_NAME < /opt/db_backups/db.sql
+  echo "imported database dump into kodekloud_db01 database"
+fi
+#Create a backup of the database
+mysqldump -u root $DB_NAME > /opt/db_backups/$DB_NAME.sql

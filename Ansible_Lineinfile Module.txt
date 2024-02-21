@@ -1,0 +1,73 @@
+Ansible Lineinfile Module
+
+The Nautilus DevOps team want to install and set up a simple httpd web server on all app servers in Stratos DC. They also want to deploy a sample web page using Ansible. Therefore, write the required playbook to complete this task as per details mentioned below.
+We already have an inventory file under /home/thor/ansible directory on jump host. Write a playbook playbook.yml under /home/thor/ansible directory on jump host itself. Using the playbook perform below given tasks:
+
+Install httpd web server on all app servers, and make sure its service is up and running.
+Create a file /var/www/html/index.html with content:
+
+This is a Nautilus sample file, created using Ansible!
+
+Using lineinfile Ansible module add some more content in /var/www/html/index.html file. Below is the content:
+
+Welcome to Nautilus Group!
+
+Also make sure this new line is added at the top of the file.
+The /var/www/html/index.html file's user and group owner should be apache on all app servers.
+The /var/www/html/index.html file's permissions should be 0644 on all app serve
+
+- name: ansible KK task 3_4
+  hosts: all
+  become: true
+  tasks:
+  - name: Install the latest version of httpd
+    ansible.builtin.yum:
+      name: httpd
+      state: present
+  - name: start and enable service httpd
+    ansible.builtin.service:
+      name: httpd
+      enabled: yes
+      state: started
+  - name: Create content file
+    ansible.builtin.copy:
+      dest: /var/www/html/index.html
+      content: |
+        This is a Nautilus sample file, created using Ansible!
+      owner: apache
+      group: apache
+      mode: 0644
+  - name: add more content
+     ansible.builtin.lineinfile:
+      path: /var/www/html/index.html
+      insertbefore: 'This is a Nautilus sample file, created using Ansible!'
+      line: Welcome to Nautilus Group!
+      owner: apache
+      group: apache
+      mode: 0644
+
+check:
+
+ansible all -a "ls -ltr /var/www/html/index.html" -i inventory
+stapp01 | CHANGED | rc=0 >>
+-rw-r--r-- 1 apache apache 82 Jan  7 05:56 /var/www/html/index.html
+stapp03 | CHANGED | rc=0 >>
+-rw-r--r-- 1 apache apache 82 Jan  7 05:56 /var/www/html/index.html
+stapp02 | CHANGED | rc=0 >>
+-rw-r--r-- 1 apache apache 82 Jan  7 05:56 /var/www/html/index.html
+
+ansible all -a "systemctl status httpd" -i inventory | grep enabled
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+   Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+
+ansible all -a "curl -s localhost" -i inventory
+stapp02 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+stapp01 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+stapp03 | CHANGED | rc=0 >>
+Welcome to Nautilus Group!
+This is a Nautilus sample file, created using Ansible!  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current

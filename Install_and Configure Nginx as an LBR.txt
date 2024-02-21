@@ -1,0 +1,44 @@
+Install and Configure Nginx as an LBR
+
+Day by day traffic is increasing on one of the websites managed by the Nautilus production support team. Therefore, the team has observed a degradation in website performance. Following discussions about this issue, the team has decided to deploy this application on a high availability stack i.e on Nautilus infra in Stratos DC. They started the migration last month and it is almost done, as only the LBR server configuration is pending. Configure LBR server as per the information given below:
+
+a. Install nginx on LBR (load balancer) server.
+b. Configure load-balancing with the an http context making use of all App Servers.
+c. Also make sure Apache service is up and running on all app servers.
+d. Once done, you can access the website using StaticApp button on the top bar.
+
+task checker on kodekloud is strict - we don't can to use another of editing /etc/nginx/nginx.conf - if we created LBR config in /etc/nginx/conf/d/ task will not be checked)
+
+
+go to any app server and look for binded apache port (it is variable for each student and ):
+
+netstat -ntlp | grep httpd
+or
+systemctl status httpd (you can see port in output)
+or 
+cat /etc/httpd/httpd.conf | grep Listen 
+Listen 8091
+and check it:
+
+curl stapp01:8091 (port from my task)
+
+then go to LBR server (stlb01) and install nginx:
+yum install -y nginx 
+after add to /etc/nginx/nginx.conf (under http section):
+
+upstream backend {
+          server stapp01.stratos.xfusioncorp.com:8091;
+          server stapp02.stratos.xfusioncorp.com:8091;
+          server stapp03.stratos.xfusioncorp.com:8091;
+}
+
+and add to /etc/nginx/nginx.conf (in server - location "/" section):
+
+proxypass http://backend
+
+systemctl enable --now nginx
+
+check by pressing "app" button and reload opened page. you can watch logs on lbr server (/var/log/nginx/access.log) and app servers (/var/log/httpd/access_log.log)
+
+press check
+

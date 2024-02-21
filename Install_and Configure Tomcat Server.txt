@@ -1,0 +1,32 @@
+Install and Configure Tomcat Server
+
+The Nautilus application development team recently finished the beta version of one of their Java-based applications, which they are planning to deploy on one of the app servers in Stratos DC. After an internal team meeting, they have decided to use the tomcat application server. Based on the requirements mentioned below complete the task:
+
+a. Install tomcat server on App Server 2.
+b. Configure it to run on port 8086.
+c. There is a ROOT.war file on Jump host at location /tmp.
+
+
+Deploy it on this tomcat server and make sure the webpage works directly on base URL i.e curl http://stapp02:8086
+
+
+we will be use default webapp root dir:
+
+1.) copy app to stapp02:
+scp /tmp/ROOT.war steve@stapp02:/tmp
+2.) install tomcat
+yum install -y tomcat 
+3.)copy app to webapp tomcat dir:
+cp -pr /tmp/ROOT.war /usr/share/tom
+4.) edit /etc/tomcat/server.xml:
+
+ <Connector port="8086" protocol="HTTP/1.1"
+
+               connectionTimeout="20000"
+
+               redirectPort="8443" />
+5.) start tomcat and check:
+systemctl enable --now tomcat
+curl stapp02:8806 (you will see  like "Welcome to xfusion!")
+
+you know tmcat lol

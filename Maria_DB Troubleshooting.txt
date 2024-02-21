@@ -1,0 +1,13 @@
+Maria DB Troubleshooting
+
+check logs in /var/log/mariadb 
+in my case it was a gssapi module and lost krb5 keytab file 
+
+1) File /etc/my.cnf.d/auth_gssapi.cnf contains the line:
+
+plugin-load-add=auth_gssapi.so
+comment it and try to restart mysqld
+
+2) ERROR 13 in logs - it is a data directory and files permissions, to fix:
+chown -R mysql:mysql /var/lib/mysql
+chmod -R 750 /var/lib/mysql

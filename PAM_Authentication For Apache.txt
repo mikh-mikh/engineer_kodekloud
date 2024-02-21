@@ -1,0 +1,38 @@
+PAM Authentication For Apache
+
+We have a requirement where we want to password protect a directory in the Apache web server document root. We want to password protect http://<website-url>:<apache_port>/protected URL as per the following requirements (you can use any website-url for it like localhost since there are no such specific requirements as of now). Setup the same on App server 2 as per below mentioned requirements:
+
+a. We want to use basic authentication.
+b. We do not want to use htpasswd file based authentication. Instead, we want to use PAM authentication, i.e Basic Auth + PAM so that we can authenticate with a Linux user.
+c. We already have a user anita with password LQfKeWWxWD which you need to provide access to.
+d. You can test the same using a curl command from jump host curl http://<website-url>:<apache_port>/protected.
+
+yum --enablerepo=epel -y install mod_authnz_external pwauth
+
+check user "anita":
+from reguar user (steve):
+[steve@stapp02 ~]$ su anita (promt anita's password from task)
+[anita@stapp02 steve]$  (ok we login)
+exit
+
+add to /etc/httpd/conf.d/authnz_external.conf:
+
+<Directory /var/www/html/protected>
+AuthType Basic
+AuthName "PAM Authentication"
+AuthBasicProvider external
+AuthExternal pwauth
+require valid-user
+</Directory>
+
+systemctl enable --now httpd (may be httpd is disabled)
+
+
+
+curl stapp02:8080/protected/index.html (we got 401)
+curl stapp02:8080/protected/ (we got 401)
+curl stapp02:8080/protected  (we got 401)
+
+curl -u anita stapp02:8080/protected/index.html
+Enter host password for user 'anita': (enter anita's password from task)
+This is KodeKloud Protected Directory

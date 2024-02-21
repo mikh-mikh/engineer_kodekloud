@@ -1,0 +1,5 @@
+Disable Root Login
+
+set this in /etc/ssh/sshd_config like this (change "yes" to "no", uncomment if needed (remove "#" if presents)):
+
+PermitRootLogin no

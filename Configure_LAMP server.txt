@@ -1,0 +1,79 @@
+Configure LAMP server
+
+xFusionCorp Industries is planning to host a WordPress website on their infra in Stratos Datacenter. They have already done infrastructure configuration—for example, on the storage server they already have a shared directory /vaw/www/html that is mounted on each app host under /var/www/html directory. Please perform the following steps to accomplish the task:
+
+a. Install httpd, php and its dependencies on all app hosts.
+b. Apache should serve on port 5000 within the apps.
+c. Install/Configure MariaDB server on DB Server.
+d. Create a database named kodekloud_db9 and create a database user named kodekloud_roy identified as password TmPcZjtRQx. Further make sure this newly created user is able to perform all operation on the database you created.
+e. Finally you should be able to access the website on LBR link, by clicking on the App button on the top bar. You should see a message like App is able to connect to the database using user kodekloud_roy
+
+[apps]
+stapp01 ansible_host=172.16.238.10 ansible_user=tony ansible_ssh_pass=Ir0nM@n ansible_sudo_pass=Ir0nM@n ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+stapp02 ansible_host=172.16.238.11 ansible_user=steve ansible_ssh_pass=Am3ric@ ansible_sudo_pass=Am3ric@ ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+stapp03 ansible_host=172.16.238.12 ansible_user=banner ansible_ssh_pass=BigGr33n ansible_sudo_pass=BigGr33n ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+[db]
+stdb01  ansible_host=172.16.239.10 ansible_user=peter ansible_ssh_pass=Sp!dy ansible_sudo_pass=Sp!dy ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+
+
+- name: linux KK task 4_5
+  hosts: apps
+  become: true
+  tasks:
+  - name: Install the latest version of httpd
+    ansible.builtin.yum:
+      name: 
+       - httpd
+       - php
+       - php-mysqlnd
+      state: present
+  - name: edit httpd port
+    ansible.builtin.lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      regexp: "^Listen 80" 
+      line: "Listen 5000"
+  - name: start and enable service httpd
+    ansible.builtin.service:
+      name: httpd
+      enabled: yes
+      state: started
+- name: mariadb
+  hosts: db
+  become: true
+  tasks:
+# we need to copy epel gpg key to avoid gpg import question when installing epel repo - let's copy it from our jump server  
+  - name: Import repo GPG key
+    copy:
+      src=/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+      dest=/etc/pki/rpm-gpg/
+      owner=root
+      group=root
+      mode=644
+  - name: Install the latest version of mariadb
+    ansible.builtin.yum:
+      name: 
+      - mariadb-server
+      - epel-release
+      state: present
+  - name: start and enable service mariadb
+    ansible.builtin.service:
+      name: mariadb
+      enabled: yes
+      state: started    
+  - name: Install MySQL-python
+    yum:
+      name:
+      - python3-pip
+      - python3-mysql
+      enablerepo: "epel"
+  - name: create new database
+    mysql_db:
+       name: kodekloud_db9 
+       state: present
+  - name: set mysql user pass
+    mysql_user: 
+       name: kodekloud_roy
+       host '%'             # we have 3 app servers - it needs to able connect to base from outside 
+       password: TmPcZjtRQx
+       priv: 'kodekloud_db19.*:ALL'
+       state: present

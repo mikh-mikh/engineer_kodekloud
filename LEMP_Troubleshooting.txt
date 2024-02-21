@@ -1,0 +1,70 @@
+LEMP Troubleshooting
+
+We have LEMP stack configured on apps and database server in Stratos DC. Its using Nginx + php-fpm, for now we have deployed a sample php page on these apps. Due to some misconfiguration the php page is not loading on the web server. Seems like at least two app servers are having issues. Find below more details and make sure website works on LBR URL and locally on each app as well.
+
+1. Nginx is supposed to run on port 80 on all app servers.
+
+2. Nginx document root is /var/www/html/
+
+3. Test the webpage on LBR URL (use LBR button on the top bar) and locally on each app server to make sure it works. It must not display any error message or nginx default page.
+
+curl stapp01 (refused)
+curl stapp02 (404)
+curl stapp03 (ok but 404)
+
+we need to get this from app servers and LB:
+"App is able to connect to the database using user kodekloud_tim"
+
+stapp03:
+
+edit /etc/nginx/nginx.conf and fix:
+
+server {
+        listen       80 default_server;
+        listen       [::]:80 default_server;
+        server_name  _;
+        root         /var/www/html/;             # there was wrong path "/usr/share/var/www/html/"
+        index index.php index.html index.htm;
+
+systemctl reload nginx
+
+stapp01:
+
+edit /etc/nginx/nginx.conf and fix:
+
+server {
+        listen       80 default_server;           # there was 8084 port
+        listen       [::]:80 default_server;      # there was 8084 port
+        server_name  _;
+        root         /var/www/html/;
+        index  index.php index.html index.htm;    # there was not index.php
+
+systemctl reload nginx        
+
+stapp02:
+
+edit /etc/nginx/nginx.conf and fix:
+
+server {
+        listen       80 default_server;
+        listen       [::]:80 default_server;
+        server_name  _;
+        root         /var/www/html/;
+        index index.php index.html index.htm;
+
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+       location ~ .php$ {
+           try_files $uri =404;
+           fastcgi_pass unix:/var/opt/remi/php74/run/php-fpm/www.sock;       # there was not "www.sock"
+           fastcgi_index index.php;
+           fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+           include fastcgi_params;
+
+systemctl reload nginx
+
+after chek by reloading LBR page many times (10-20) and getting:
+
+"App is able to connect to the database using user kodekloud_tim"

@@ -1,0 +1,20 @@
+Linux Services
+
+As per details shared by the development team, the new application release has some dependencies on the back end. There are some packages/services that need to be installed on all app servers under Stratos Datacenter. As per requirements please perform the following steps:
+
+a. Install postfix package on all the application servers.
+b. Once installed, make sure it is enabled to start during boot.
+
+
+yum install postfix -y
+vi /etc/postfix/main.cf
+
+myhostname = smtp.example.local
+mydomain = example.local
+myorigin = $mydomain
+inet_interfaces = all
+inet_protocols = all
+mydestination = $myhostname, localhost.$mydomain, localhost,
+mynetworks = 172.16.238.11/24, 127.0.0.0/8
+
+systemctl enable postfix && service postfix start && service postfix status

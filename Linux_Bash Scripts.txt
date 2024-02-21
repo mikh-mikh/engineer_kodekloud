@@ -1,0 +1,16 @@
+Linux Bash Scripts
+
+
+cd /scripts
+echo "zip -r xfusioncorp_news.zip /var/www/html/news
+mv xfusioncorp_news.zip /backup/xfusioncorp_news.zip
+scp /backup/xfusioncorp_news.zip clint@172.16.238.16:/backup" > news_backup.sh
+chmod +x news_backup.sh
+./news_backup.sh
+
+cd /backup
+
+ssh-keygen -t rsa -b 4096 -f "/home/banner/.ssh/id_rsa" -q -N ""
+sshpass -p H@wk3y3 ssh-copy-id -i "/home/banner/.ssh/id_rsa.pub" clint@172.16.238.16 -f -o StrictHostKeyChecking=no
+
+scp xfusioncorp_news.zip clint@172.16.238.16:/backup/

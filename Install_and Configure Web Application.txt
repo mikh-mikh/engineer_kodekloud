@@ -1,0 +1,55 @@
+Install and Configure Web Application
+
+xFusionCorp Industries is planning to host two static websites on their infra in Stratos Datacenter. The development of these websites is still in-progress, but we want to get the servers ready. Please perform the following steps to accomplish the task:
+
+a. Install httpd package and dependencies on app server 3.
+b. Apache should serve on port 5003.
+c. There are two website's backups /home/thor/news and /home/thor/demo on jump_host. Set them up on Apache in a way that news should work on the link http://localhost:5003/news/ and demo should work on link http://localhost:5003/demo/ on the mentioned app server.
+d. Once configured you should be able to access the website using curl command on the respective app server, i.e curl http://localhost:5003/news/ and curl http://localhost:5003/demo/
+
+inventory:
+
+stapp03 ansible_host=172.16.238.12 ansible_user=banner ansible_ssh_pass=BigGr33n ansible_sudo_pass=BigGr33n ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+
+apache.yaml:
+
+
+- name: linux KK task 4_7
+  hosts: all
+  become: true
+  tasks:
+  - name: Install the latest version of httpd
+    ansible.builtin.yum:
+      name: 
+       - httpd
+      state: present
+  - name: copy content from jump
+    ansible.builtin.copy:
+      src="{{ item.src }}"
+      dest="{{ item.dest }}"
+      owner=apache
+      group=apache
+      mode=640
+    loop:
+      - src: /home/thor/news
+        dest: /var/www/html
+      - src: /home/thor/demo
+        dest: /var/www/html  
+  - name: edit httpd port
+    ansible.builtin.lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      regexp: "^Listen 80" 
+      line: "Listen 5003"
+  - name: add virtualhosts to httpd
+    ansible.builtin.blockinfile:
+      path: /etc/httpd/conf/httpd.conf
+      block: |
+         Alias /news/ /var/www/html/news/
+         Alias /demo /var/www/html/demo/
+      insertafter: DocumentRoot "/var/www/html"
+    tags: httpd_conf         
+  - name: start and enable service httpd
+    ansible.builtin.service:
+      name: httpd
+      enabled: yes
+      state: started

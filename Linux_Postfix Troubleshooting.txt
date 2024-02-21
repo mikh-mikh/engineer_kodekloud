@@ -1,0 +1,14 @@
+Linux Postfix Troubleshooting 
+
+
+
+
+
+#---------------------------------------------------------------------
+# round robin balancing between the various backends
+#---------------------------------------------------------------------
+backend app
+    balance     roundrobin
+    server  stapp1 172.16.238.10:8084 check
+    server  stapp2 172.16.238.11:8084 check
+    server  stapp3 172.16.238.12:8084 check
