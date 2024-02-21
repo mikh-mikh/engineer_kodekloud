@@ -1,0 +1,90 @@
+Configure Nginx + PHP-FPM Using Unix Sock
+
+The Nautilus application development team is planning to launch a new PHP-based application, which they want to deploy on Nautilus infra in Stratos DC. The development team had a meeting with the production support team and they have shared some requirements regarding the infrastructure. Below are the requirements they shared:
+
+a. Install nginx on app server 2 , configure it to use port 8093 and its document root should be /var/www/html.
+b. Install php-fpm version 7.3 on app server 2, it must use the unix socket /var/run/php-fpm/default.sock (create the parent directories if don't exist).
+c. Configure php-fpm and nginx to work together.
+d. Once configured correctly, you can test the website using curl http://stapp02:8093/index.php command from jump host.
+
+inventory:
+```
+stapp02 ansible_host=172.16.238.11 ansible_user=steve ansible_ssh_pass=Am3ric@ ansible_sudo_pass=Am3ric@ ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+```
+
+- name: linux KK task 4_9
+  hosts: all
+  become: true
+  tasks:
+  - name: Import repo GPG key
+    copy:
+      src: /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+      dest: /etc/pki/rpm-gpg/
+      owner: root
+      group: root
+      mode: 644
+  - name: Install the epel and remi repos a remote repo
+    ansible.builtin.dnf:
+      name: 
+        - 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm'
+        - 'https://rpms.remirepo.net/enterprise/remi-release-8.rpm'
+      disable_gpg_check: true  
+      state: present
+  - name: Install httpd and php-fpm
+    ansible.builtin.yum:
+      name: 
+       - nginx
+       - '@php:remi-7.3'
+      state: present    
+  - name: edit nginx port
+    ansible.builtin.replace:
+      path: /etc/nginx/nginx.conf
+      regexp: "        listen       80"
+      replace: "        listen       8093"
+    tags: nginx_port
+  - name: edit root dir on nginx.cpnf
+    ansible.builtin.lineinfile:
+      path: /etc/nginx/nginx.conf
+      regexp: '        root         /usr/share/nginx/html;'
+      line: "        root         /var/www/html;"
+    tags: nginx_conf_root  
+  - ansible.builtin.file:
+      path: /var/run/php-fpm/
+      state: directory
+      mode: '0660'
+      owner: nginx
+      group: nginx
+  - name: edit php-fpm socket
+    ansible.builtin.replace:
+      dest: /etc/php-fpm.d/www.conf
+      regexp: "listen = /run/php-fpm/www.sock"
+      replace: "listen = /var/run/php-fpm/default.sock"
+    tags: php-fpm_conf
+  - name: edit nginx-fpm upstream socket
+    ansible.builtin.replace:
+      dest: /etc/nginx/conf.d/php-fpm.conf
+      regexp: "        server unix:/run/php-fpm/www.sock;"
+      replace: "        server unix:/var/run/php-fpm/default.sock;"
+    tags: nginx_fpm_sock
+  - name: edit nginx-fpm upstream socket
+    ansible.builtin.lineinline:
+      dest: /etc/nginx/default.d/php.conf
+      line: "    include fastcgi_params;"
+      replace: "        server unix:/var/run/php-fpm/default.sock;"
+      insertafter: "    fastcgi_pass   php-fpm;"
+    tags: nginx_fpm_sock
+  - name: start and enable service nginx
+    ansible.builtin.service:
+      name: nginx
+      enabled: yes
+      state: started
+    tags: service_nginx
+  - name: start and enable service php-fpm
+    ansible.builtin.service:
+      name: php-fpm
+      state: restarted
+    tags: service_php
+
+
+
+    include fastcgi_params;

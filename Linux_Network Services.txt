@@ -1,0 +1,41 @@
+Linux Network Services
+
+Our monitoring tool has reported an issue in Stratos Datacenter. One of our app servers has an issue, as its Apache service is not reachable on port 3000 (which is the Apache port). The service itself could be down, the firewall could be at fault, or something else could be causing the issue.
+
+Use tools like telnet, netstat, etc. to find and fix the issue. Also make sure Apache is reachable from the jump host without compromising any security settings.
+
+Once fixed, you can test the same using command curl http://stapp01:3000 command from jump host.
+
+in my case stapp01:3000 is down (no route to host - may be it is firewall or any - check it:
+
+systemctl satus httpd:
+Feb 02 12:22:12 stapp01.stratos.xfusioncorp.com httpd[675]: (98)Address already in use: AH00072: make_sock: could
+not bind to address 0.0.0.0:3000
+
+netstat -ntlp | grep 3000
+tcp        0      0 127.0.0.1:3000          0.0.0.0:*               LISTEN      613/sendmail: accep
+port is binded by postfix
+we need httpd:
+
+ps aux | grep 613
+root         613  0.0  0.0  65648  6936 ?        Ss   12:22   0:00 sendmail: accepting connections
+
+systemctl disable --now sendmail
+systemctl enable --now httpd
+
+netstat - ntlp | grep 3000
+tcp        0      0 0.0.0.0:3000            0.0.0.0:*               LISTEN      1249/httpd
+
+curl stapp01:3000
+curl: (7) Failed to connect to stapp01 port 3000: No route to host
+seems firewall
+try to open 3000 tcp:
+
+sudo iptables -I INPUT -p tcp -m tcp --dport 3000 -j ACCEPT  && sudo iptables-save > /etc/sysconfig/iptables &&  cat /etc/sysconfig/iptables
+
+check from jumphost:
+
+curl stapp01:3000
+
+works
+

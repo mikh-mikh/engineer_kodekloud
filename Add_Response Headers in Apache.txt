@@ -1,0 +1,41 @@
+Add Response Headers in Apache
+
+We are working on hardening Apache web server on all app servers. As a part of this process we want to add some of the Apache response headers for security purpose. We are testing the settings one by one on all app servers. As per details mentioned below enable these headers for Apache:
+
+Install httpd package on App Server 1 using yum and configure it to run on 3004 port, make sure to start its service.
+
+Create an index.html file under Apache's default document root i.e /var/www/html and add below given content in it.
+Welcome to the xFusionCorp Industries!
+
+Configure Apache to enable below mentioned headers:
+X-XSS-Protection header with value 1; mode=block
+X-Frame-Options header with value SAMEORIGIN
+X-Content-Type-Options header with value nosniff
+
+Note: You can test using curl on the given app server as LBR URL will not work for this task.
+
+
+yum install -y httpd
+edit /etc/httpd/conf/httpd.conf:
+
+Listen 3004
+Header set X-XSS-Protection "1; mode=block"
+Header always append X-Frame-Options SAMEORIGIN
+Header set X-Content-Type-Options nosniff
+
+systemctl enable --now httpd
+
+check:
+curl -s -D - -o /dev/null stapp01:3004 :
+
+HTTP/1.1 200 OK
+Date: Sat, 27 Jan 2024 10:30:48 GMT
+Server: Apache/2.4.37 (CentOS Stream)
+X-Frame-Options: SAMEORIGIN
+Last-Modified: Sat, 27 Jan 2024 10:28:35 GMT
+ETag: "27-60feae00d3d6d"
+Accept-Ranges: bytes
+Content-Length: 39
+X-XSS-Protection: 1; mode=block
+X-Content-Type-Options: nosniff
+Content-Type: text/html; charset=UTF-8

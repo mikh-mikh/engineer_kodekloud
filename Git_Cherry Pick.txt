@@ -1,0 +1,9 @@
+Git Cherry Pick
+
+cd /usr/src/kodekloudrepos/games
+
+git log
+see the commit with needed file and catch his hash: (2b7ca9a74fa2b9c00f6eb2d8c4576a07ffda392e)
+git checkout master
+git cherry-pick 2b7ca9a74fa2b9c00f6eb2d8c4576a07ffda392e
+git push

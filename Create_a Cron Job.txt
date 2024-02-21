@@ -1,0 +1,14 @@
+Create a Cron Job
+
+ssh to servers, install crony and enable & start crond service (de-facto already installed enabled and started)
+
+sudo su
+crontab -e:
+*/5 * * * * echo cronjob > /tmp/crontab.txt
+
+check:
+crontab -l
+
+wait for 5 minutes, after check job:
+cat /tmp/crontab.txt
+cronjob

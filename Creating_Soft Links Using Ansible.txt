@@ -1,0 +1,92 @@
+Creating Soft Links Using Ansible
+
+The Nautilus DevOps team is practicing some of the Ansible modules and creating and testing different Ansible playbooks to accomplish tasks. Recently they started testing an Ansible file module to create soft links on all app servers. Below you can find more details about it.
+Write a playbook.yml under /home/thor/ansible directory on jump host, an inventory file is already present under /home/thor/ansible directory on jump host itself. Using this playbook accomplish below given tasks:
+Create an empty file /opt/finance/blog.txt on app server 1; its user owner and group owner should be tony. Create a symbolic link of source path /opt/finance to destination /var/www/html.
+Create an empty file /opt/finance/story.txt on app server 2; its user owner and group owner should be steve. Create a symbolic link of source path /opt/finance to destination /var/www/html.
+Create an empty file /opt/finance/media.txt on app server 3; its user owner and group owner should be banner. Create a symbolic link of source path /opt/finance to destination /var/www/html.
+
+check for dirs:
+ansible all -a "ls -ltr /opt/finance" -i inventory
+stapp02 | CHANGED | rc=0 >>
+total 0
+stapp01 | CHANGED | rc=0 >>
+total 0
+stapp03 | CHANGED | rc=0 >>
+total 0
+
+play
+ansible-playbook -i inventory playbook.yml
+
+check for files in dir:
+ansible all -a "ls -ltr /opt/finance" -i inventory
+stapp01 | CHANGED | rc=0 >>
+total 0
+-rw-r--r-- 1 tony tony 0 Jan  6 06:57 blog.txt
+stapp03 | CHANGED | rc=0 >>
+total 0
+-rw-r--r-- 1 banner banner 0 Jan  6 06:57 media.txt
+stapp02 | CHANGED | rc=0 >>
+total 0
+-rw-r--r-- 1 steve steve 0 Jan  6 06:57 story.txt
+
+check for symlinks:
+ansible all -a "ls -ltr /var/ww/html" -i inventory
+stapp02 | CHANGED | rc=0 >>
+lrwxrwxrwx 1 root root 12 Jan  6 06:57 /var/www/html -> /opt/finance
+stapp01 | CHANGED | rc=0 >>
+lrwxrwxrwx 1 root root 12 Jan  6 06:57 /var/www/html -> /opt/finance
+stapp03 | CHANGED | rc=0 >>
+lrwxrwxrwx 1 root root 12 Jan  6 06:57 /var/www/html -> /opt/finance
+
+playbook.yml:
+
+- hosts: stapp01
+  gather_facts: false
+  become: true
+
+  tasks:
+    - name: Create empty file
+      file:
+        dest: /opt/finance/blog.txt
+        state: touch
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    - name: Create symbolic link
+      file:
+        src: /opt/finance
+        dest: /var/www/html
+        state: link
+
+- hosts: stapp02
+  gather_facts: false
+  become: true
+
+  tasks:
+    - file:
+        dest: /opt/finance/story.txt
+        state: touch
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    - name: Create symbolic link
+      file:
+        src: /opt/finance
+        dest: /var/www/html
+        state: link
+
+- hosts: stapp03
+  gather_facts: false
+  become: true
+
+  tasks:
+    - file:
+        dest: /opt/finance/media.txt
+        state: touch
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+    - name: Create symbolic link
+      file:
+        src: /opt/finance
+        dest: /var/www/html
+        state: link
+

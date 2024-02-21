@@ -1,0 +1,63 @@
+Install and Configure DB Server
+
+We need to setup a database server on Nautilus DB Server in Stratos Datacenter. Please perform the below given steps on DB Server:
+
+a. Install/Configure MariaDB server.
+b. Create a database named kodekloud_db10.
+c. Create a user called kodekloud_roy and set its password to LQfKeWWxWD.
+d. Grant full permissions to user kodekloud_roy on database kodekloud_db10.
+
+I did it with ansible:
+
+yum install -y ansible
+
+vi inventory:
+[db]
+stdb01  ansible_host=172.16.239.10 ansible_user=peter ansible_ssh_pass=Sp!dy ansible_sudo_pass=Sp!dy ansible_ssh_extra_args='-o StrictHostKeyChecking=no'
+
+vi mysql.yaml:
+
+- name: mariadb
+  hosts: db
+  become: true
+  tasks:
+# we need to copy epel gpg key to avoid gpg import question when installing epel repo - let's copy it from our jump server  
+  - name: Import repo GPG key
+    copy:
+      src=/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
+      dest=/etc/pki/rpm-gpg/
+      owner=root
+      group=root
+      mode=644
+  - name: Install the latest version of mariadb
+    ansible.builtin.yum:
+      name:
+      - mariadb-server
+      - epel-release
+      state: present
+  - name: start and enable service mariadb
+    ansible.builtin.service:
+      name: mariadb
+      enabled: yes
+      state: started
+ # we need to install this components for working with mysql by ansible
+  - name: Install MySQL-python
+    yum:
+      name:
+      - python3-pip
+      - python3-mysql
+      enablerepo: "epel"
+  - name: create new database
+    mysql_db:
+       name: kodekloud_db10
+       state: present
+  - name: set mysql user pass
+    mysql_user: 
+       name: kodekloud_roy
+       host: '%'
+       password: LQfKeWWxWD
+       priv: 'kodekloud_db10.*:ALL'
+       state: present
+
+
+ansible-playbook -i inventory mysql.yaml

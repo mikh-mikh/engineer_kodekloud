@@ -1,0 +1,9 @@
+Linux String Substitute (sed)
+
+cd /home
+cp -pr BSD.txt /home/banner/BSD.TXT
+sed '/following/d' BSD.txt > BSD_DELETE.txt
+sed 's/or/them/g' BSD.txt > BSD_REPLACE.txt
+cat BSD_DELETE.txt | grep -w following
+cat BSD_REPLACE.txt | grep -w or
+cat BSD_REPLACE.txt | grep -w

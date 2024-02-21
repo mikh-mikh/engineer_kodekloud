@@ -1,0 +1,11 @@
+Linux NTP Setup
+
+1. Install and configure NTP server on App Server 2.
+2. Add NTP server 3.europe.pool.ntp.org in NTP configuration on App Server 2.
+3. Please do not try to start/restart/stop ntp service, as we already have a restart for this service scheduled for tonight and we don't want these changes to be applied right now.
+
+sudo yum install ntp 
+
+/etc/ntp.conf:
+server 3.europe.pool.ntp.org iburst
+systemctl status ntp

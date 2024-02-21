@@ -1,0 +1,17 @@
+Linux Configure sudo
+
+[tony@stapp01~]$ sudo su -
+[root@stapp01 ~]# visudo:
+
+mark ALL=(ALL)   NOPASSWD:ALL
+
+:wq
+
+check:
+
+[root@stapp01 ~]# sudo su (check sudoers to correct - may be visudo corrupts)
+[root@stapp01 ~]# su mark
+[mark@stapp01 ~]$ sudo su
+[root@stapp01 ~]# exit
+
+do it in stapp02 and stapp03

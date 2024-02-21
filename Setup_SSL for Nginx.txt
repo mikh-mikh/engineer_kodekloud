@@ -1,0 +1,28 @@
+Setup SSL for Nginx
+
+The system admins team of xFusionCorp Industries needs to deploy a new application on App Server 3 in Stratos Datacenter. They have some pre-requites to get ready that server for application deployment. Prepare the server as per requirements shared below:
+
+1. Install and configure nginx on App Server 3.
+2. On App Server 3 there is a self signed SSL certificate and key present at location /tmp/nautilus.crt and /tmp/nautilus.key. Move them to some appropriate location and deploy the same in Nginx.
+3. Create an index.html file with content Welcome! under Nginx document root.
+4. For final testing try to access the App Server 3 link (either hostname or IP) from jump host using curl command. For example curl -Ik https://<app-server-ip>/
+
+yum install -y nginx
+cat /etc/nginx/nginx.conf | grep cert
+#        ssl_certificate "/etc/pki/nginx/server.crt";
+#        ssl_certificate_key "/etc/pki/nginx/private/server.key";
+
+mkdir -P /etc/pki/nginx/private
+mv /tmp/nautilus.crt /etc/pki/nginx/server.crt
+mv /tmp/nautilus.key /etc/pki/nginx/private/server.key
+chmod 700 /etc/pki/nginx/
+chmod 700 /etc/pki/nginx/private
+chmod 644 /etc/pki/nginx/server.crt
+chmod 640 /etc/pki/nginx/private/server.key
+chown root:nginx /etc/pki/nginx/private/server.key
+echo "Welcome!" > /usr/share/nginx/html/index.html
+
+edit /etc/nginx/nginx.conf (uncomment all under "#Settings for a TLS enabled server.", add string "ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;" in server block)
+systemctl --enable nginx
+curl -k https://stapp03 (cert is self-signed - we need insecure "-k" key)
+Welcome!

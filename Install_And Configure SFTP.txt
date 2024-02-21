@@ -1,0 +1,30 @@
+Install And Configure SFTP
+
+Some of the developers from Nautilus project team have asked for SFTP access to at least one of the app server in Stratos DC. After going through the requirements, the system admins team has decided to configure the SFTP server on App Server 2 server in Stratos Datacenter. Please configure it as per the following instructions:
+
+a. Create a SFTP user anita and set its password to B4zNgHA7Ya. There is already a group called ftp, you can utilise the same.
+b. Password authentication should be enabled for this user.
+c. SFTP user should only be allowed to make SFTP connections.
+
+1. make user and chown homedir to root:
+
+useradd -s /bin/false -g ftp anita        # need to allow only sftp and deny shell
+passwd anita                              # set password from task 
+chown root:root /home/anita               # need to chroot jail
+
+2. set sftp by edit sshd config:
+edit /etc/ssh/sshd_config (edit Subsytem string add "Match User anita" block):
+
+Subsystem      sftp    internal-sftp
+
+Match User anita
+        X11Forwarding no
+        AllowTcpForwarding no
+        AllowAgentForwarding no
+        PermitTunnel no
+        ForceCommand internal-sftp
+        ChrootDirectory /home/anita
+
+3. restart sshd
+systemctl restart sshd
+

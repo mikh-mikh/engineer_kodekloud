@@ -1,0 +1,117 @@
+Jenkins Setup Node App
+
+The Nautilus application development team is working on to develop a Node app. They are still in the development phase however they want to deploy and test their app on a containerized environment and using a Jenkins pipeline. Please find below more details to complete this task.
+Click on the Jenkins button on the top bar to access the Jenkins UI. Login using username admin and password Adm!n321.
+Similarly, click on the Gitea button on the top bar to access the Gitea UI. Login using username sarah and password Sarah_pass123.
+There is a repository named sarah/web in Gitea, which is cloned on the Storage server under /home/sarah/web directory.
+A Dockerfile is already present under the git repository, please push the same to the origin repo if not pushed already.
+Create a jenkins pipeline job named node-app and configure it as below:
+Configure it to deploy the app on App Server 3
+The pipeline must have two stages Build and Deploy (names are case sensitive)
+In the Build stage, build an image named stregi01.stratos.xfusioncorp.com:5000/node-app:latest using the Dockerfile present under the Git repository. stregi01.stratos.xfusioncorp.com:5000 is the image registry server. After building the image push the same to the image registry server.
+In the Deploy stage, create a container named node-app using the image you build it the Build stage. Make sure to map the container port with host port 8080.
+
+Note:
+
+You might need to install some plugins and restart Jenkins service. So, we recommend clicking on Restart Jenkins when installation is complete and no jobs are running on plugin installation/update page i.e update centre. Also, Jenkins UI sometimes gets stuck when Jenkins service restarts in the back end. In this case, please make sure to refresh the UI page.
+
+For these kind of scenarios requiring changes to be done in a web UI, please take screenshots so that you can share it with us for review in case your task is marked incomplete. You may also consider using a screen recording software such as loom.com to record and share your work.
+
+
+
+1. Install plugins:  SSH  & publish over SSH, ssh creds, credentails, Pipeline (+ job, nodes and processes, basic steps, stage step) Git, ssh Build Agents
+
+2. Setup credentials for stapp03 server user, #sarah, ststor01 user (natasha)
+
+3. setup agent stapp03, #ssh host stapp03
+
+3.5 go to ststor01 to /home/sarah/web and  check and push Dockerfile - if this is not presented/Dockerfile broken on sarah/web repo in gitea server:
+ssh sarah@ststor01
+cd /home/web/sarah
+git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+nothing to commit, working tree clean
+
+
+4. go to Jenkins and create a Pipeline Job named node-app
+
+pipeline {
+    agent {
+        label "stapp03"
+    }
+    stages {
+        stage('Build') {
+            steps {
+                // Get some code from a GitHub repository
+                git branch: "master",
+                    url: "https://80-port-cf09c396cb0d4961.labs.kodekloud.com/sarah/web.git",
+                    credentialsId: "sarah"
+                // Run docker on a Unix agent.
+                sh "docker build -t stregi01.stratos.xfusioncorp.com:5000/node-app:latest /home/banner/workspace/node-app"
+                sh "docker push stregi01.stratos.xfusioncorp.com:5000/node-app:latest"
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh "docker run -d -p 8080:8080 --name node-app stregi01.stratos.xfusioncorp.com:5000/node-app:latest"
+            }
+        }
+    }
+}
+
+5. check (there is no button "app" in KK because i do not know why):
+
+curl stapp03:8080
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>About Sharks</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Merriweather:400,700" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+    <nav class="navbar navbar-dark bg-dark navbar-static-top navbar-expand-md">
+        <div class="container">
+            <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false"> <span class="sr-only">Toggle navigation</span>
+            </button> <a class="navbar-brand" href="#">Everything Sharks</a>
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav mr-auto">
+                    <li class="active nav-item"><a href="/" class="nav-link">Home</a>
+                    </li>
+                    <li class="nav-item"><a href="/sharks" class="nav-link">Sharks</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="jumbotron">
+        <div class="container">
+            <h1>Want to Learn About Sharks?</h1>
+            <p>Are you ready to learn about sharks?</p>
+            <br>
+            <p><a class="btn btn-primary btn-lg" href="/sharks" role="button">Get Shark Info</a>
+            </p>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <h3>Not all sharks are alike</h3>
+                <p>Though some are dangerous, sharks generally do not attack humans. Out of the 500 species known to researchers, only 30 have been known to attack humans.
+                </p>
+            </div>
+            <div class="col-lg-6">
+                <h3>Sharks are ancient</h3>
+                <p>There is evidence to suggest that sharks lived up to 400 million years ago.
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
